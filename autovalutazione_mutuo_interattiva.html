@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Autovalutazione interattiva - Mutuo</title>
+<script>
+function aggiornaSintesi() {
+    const righe = document.querySelectorAll("tbody tr[data-aspetto]");
+    let testo = "AUTOVALUTAZIONE - PRIMA VERSIONE LAVORO SUL MUTUO\n\n";
+
+    righe.forEach(function(riga, indice) {
+        const aspetto = riga.getAttribute("data-aspetto");
+        const scelta = riga.querySelector("input[type='radio']:checked");
+        const nota = riga.querySelector("input[type='text']").value.trim();
+
+        testo += (indice + 1) + ". " + aspetto + "\n";
+        testo += "   Esito: " + (scelta ? scelta.value : "non compilato") + "\n";
+        if (nota.length > 0) {
+            testo += "   Nota: " + nota + "\n";
+        }
+        testo += "\n";
+    });
+
+    const commento = document.getElementById("commento-libero").value.trim();
+    testo += "COMMENTO LIBERO\n";
+    testo += commento.length > 0 ? commento : "non compilato";
+
+    document.getElementById("sintesi").value = testo;
+}
+
+function copiaSintesi() {
+    aggiornaSintesi();
+    const sintesi = document.getElementById("sintesi");
+    sintesi.select();
+    document.execCommand("copy");
+    alert("Sintesi copiata. Puoi incollarla nella consegna di Classroom.");
+}
+
+function pulisciModulo() {
+    const conferma = confirm("Vuoi cancellare tutte le risposte?");
+    if (!conferma) {
+        return;
+    }
+
+    document.querySelectorAll("input[type='radio']").forEach(function(el) {
+        el.checked = false;
+    });
+
+    document.querySelectorAll("input[type='text']").forEach(function(el) {
+        el.value = "";
+    });
+
+    document.getElementById("commento-libero").value = "";
+    document.getElementById("sintesi").value = "";
+}
+
+function salvaLocale() {
+    const dati = {};
+
+    document.querySelectorAll("input[type='radio']").forEach(function(el) {
+        if (el.checked) {
+            dati[el.name] = el.value;
+        }
+    });
+
+    document.querySelectorAll("input[type='text']").forEach(function(el) {
+        dati[el.id] = el.value;
+    });
+
+    dati["commento-libero"] = document.getElementById("commento-libero").value;
+
+    localStorage.setItem("autovalutazioneMutuo", JSON.stringify(dati));
+    alert("Risposte salvate in questo browser.");
+}
+
+function caricaLocale() {
+    const testo = localStorage.getItem("autovalutazioneMutuo");
+    if (!testo) {
+        alert("Non ci sono risposte salvate in questo browser.");
+        return;
+    }
+
+    const dati = JSON.parse(testo);
+
+    Object.keys(dati).forEach(function(chiave) {
+        const radio = document.querySelector("input[type='radio'][name='" + chiave + "'][value='" + dati[chiave] + "']");
+        if (radio) {
+            radio.checked = true;
+        }
+
+        const campo = document.getElementById(chiave);
+        if (campo) {
+            campo.value = dati[chiave];
+        }
+    });
+
+    aggiornaSintesi();
+}
+</script>
+</head>
+<body>
+
+<div id="inizio">
+<h1>Mutuo — collaudo e autovalutazione interattiva della prima versione</h1>
+
+<p>
+Questo file serve per controllare la prima versione del lavoro sul mutuo prima della revisione finale.
+Compila la griglia, genera la sintesi e incollala nella consegna di Classroom.
+</p>
+
+<h2>Indice</h2>
+<ul>
+<li><a href="#consegna">1. Promemoria della consegna</a></li>
+<li><a href="#valori-collaudo">2. Valori di collaudo</a></li>
+<li><a href="#caso1">3. Caso 1 — procedimento iterativo</a></li>
+<li><a href="#caso2">4. Caso 2 — formula matematica della rata</a></li>
+<li><a href="#autovalutazione">5. Griglia di autovalutazione</a></li>
+<li><a href="#commento">6. Commento libero</a></li>
+<li><a href="#sintesi-finale">7. Sintesi da copiare in Classroom</a></li>
+</ul>
+</div>
+
+<hr>
+
+<div id="consegna">
+<h2>1. Promemoria della consegna</h2>
+
+<p>
+La consegna completa prevedeva una o (facoltativo) due soluzioni.
+Il procedimento che era obbligatorio realizzare per primo era quello iterativo.
+Molti di voi non hanno compreso questo requisito e hanno realizzato un altro procedimento.
+Va bene, non va certo scartato, ma diventa più difficile collaudare insieme.
+Per chiarire e poi poter procedere in modo chiaro lunedì 25 maggio in laboratorio 
+leggete questo documento e rispondete alle domande di autovalutazione in fondo.
+</p>
+
+<h3>Soluzione 1 — Procedimento iterativo</h3>
+
+<p>Dati in ingresso:</p>
+<ul>
+<li>capitale iniziale</li>
+<li>tasso annuo</li>
+<li>rata mensile fissa che ci si può permettere</li>
+</ul>
+
+<p>Domanda:</p>
+<p>
+Se posso pagare questa rata, quante rate serviranno per estinguere il mutuo?
+</p>
+
+<p>Procedimento atteso:</p>
+
+<pre>
+debitoResiduo = capitaleIniziale
+
+finché debitoResiduo &gt; 0:
+    quotaInteressi = debitoResiduo * tassoPeriodale
+    quotaCapitale = rata - quotaInteressi
+    debitoResiduo = debitoResiduo - quotaCapitale
+</pre>
+
+<h3>Soluzione 2 — Formula matematica della rata</h3>
+
+<p>Dati in ingresso:</p>
+<ul>
+<li>capitale iniziale</li>
+<li>tasso annuo</li>
+<li>numero di anni</li>
+</ul>
+
+<p>Domanda:</p>
+<p>
+Se voglio finire in questo numero di anni, quanto deve essere la rata?
+</p>
+
+<p>Formula:</p>
+
+<pre>
+rata = capitale * (i * (1 + i)^n) / ((1 + i)^n - 1)
+</pre>
+
+<p>
+dove <code>i</code> è il tasso periodale e <code>n</code> è il numero totale di rate.
+</p>
+
+<p><a href="#inizio">Torna all'indice</a></p>
+</div>
+
+<hr>
+
+<div id="valori-collaudo">
+<h2>2. Valori di collaudo</h2>
+
+<p>
+Usa questi valori per provare la tua prima versione.
+Non cambiare i dati durante il collaudo, altrimenti non puoi confrontare i risultati.
+</p>
+
+<h3>Valori per il Caso 1 — procedimento iterativo</h3>
+<ul>
+<li>Capitale iniziale: 100000 euro</li>
+<li>Tasso annuo: 3,6%</li>
+<li>Tasso mensile: 0,003</li>
+<li>Rata mensile fissa: 550 euro</li>
+</ul>
+
+<h3>Valori per il Caso 2 — formula matematica della rata</h3>
+<ul>
+<li>Capitale iniziale: 100000 euro</li>
+<li>Tasso annuo: 3,6%</li>
+<li>Tasso mensile: 0,003</li>
+<li>Durata: 20 anni</li>
+<li>Numero di rate: 240</li>
+<li>Rata mensile attesa: circa 585,11 euro</li>
+</ul>
+
+<p><a href="#inizio">Torna all'indice</a></p>
+</div>
+
+<hr>
+
+<div id="caso1">
+<h2>3. Caso 1 — procedimento iterativo</h2>
+
+<p>
+Controlla se il tuo programma, foglio o pagina produce risultati compatibili con questi.
+</p>
+
+<h3>Prime 3 righe attese</h3>
+
+<table border="1">
+<tr>
+<th>Rata</th>
+<th>Debito iniziale</th>
+<th>Interessi</th>
+<th>Quota capitale</th>
+<th>Rata pagata</th>
+<th>Debito residuo</th>
+</tr>
+<tr>
+<td>1</td>
+<td>100000,00</td>
+<td>300,00</td>
+<td>250,00</td>
+<td>550,00</td>
+<td>99750,00</td>
+</tr>
+<tr>
+<td>2</td>
+<td>99750,00</td>
+<td>299,25</td>
+<td>250,75</td>
+<td>550,00</td>
+<td>99499,25</td>
+</tr>
+<tr>
+<td>3</td>
+<td>99499,25</td>
+<td>298,50</td>
+<td>251,50</td>
+<td>550,00</td>
+<td>99247,75</td>
+</tr>
+</table>
+
+<h3>Ultime 3 righe attese</h3>
+
+<table border="1">
+<tr>
+<th>Rata</th>
+<th>Debito iniziale</th>
+<th>Interessi</th>
+<th>Quota capitale</th>
+<th>Rata pagata</th>
+<th>Debito residuo</th>
+</tr>
+<tr>
+<td>262</td>
+<td>1211,49</td>
+<td>3,63</td>
+<td>546,37</td>
+<td>550,00</td>
+<td>665,12</td>
+</tr>
+<tr>
+<td>263</td>
+<td>665,12</td>
+<td>2,00</td>
+<td>548,00</td>
+<td>550,00</td>
+<td>117,12</td>
+</tr>
+<tr>
+<td>264</td>
+<td>117,12</td>
+<td>0,35</td>
+<td>117,12</td>
+<td>117,47</td>
+<td>0,00</td>
+</tr>
+</table>
+
+<p>
+Controllo rapido: il piano dura 264 rate, cioè 22 anni. L'ultima rata non è 550,00 euro,
+ma 117,47 euro, perché serve solo a chiudere il debito residuo.
+</p>
+
+<p><a href="#inizio">Torna all'indice</a></p>
+</div>
+
+<hr>
+
+<div id="caso2">
+<h2>4. Caso 2 — formula matematica della rata</h2>
+
+<p>
+Controlla se la soluzione con formula produce una rata compatibile con questi valori.
+</p>
+
+<h3>Prime 3 righe attese</h3>
+
+<table border="1">
+<tr>
+<th>Rata</th>
+<th>Debito iniziale</th>
+<th>Interessi</th>
+<th>Quota capitale</th>
+<th>Rata pagata</th>
+<th>Debito residuo</th>
+</tr>
+<tr>
+<td>1</td>
+<td>100000,00</td>
+<td>300,00</td>
+<td>285,11</td>
+<td>585,11</td>
+<td>99714,89</td>
+</tr>
+<tr>
+<td>2</td>
+<td>99714,89</td>
+<td>299,14</td>
+<td>285,97</td>
+<td>585,11</td>
+<td>99428,92</td>
+</tr>
+<tr>
+<td>3</td>
+<td>99428,92</td>
+<td>298,29</td>
+<td>286,82</td>
+<td>585,11</td>
+<td>99142,10</td>
+</tr>
+</table>
+
+<h3>Ultime 3 righe attese</h3>
+
+<table border="1">
+<tr>
+<th>Rata</th>
+<th>Debito iniziale</th>
+<th>Interessi</th>
+<th>Quota capitale</th>
+<th>Rata pagata</th>
+<th>Debito residuo</th>
+</tr>
+<tr>
+<td>238</td>
+<td>1745,46</td>
+<td>5,24</td>
+<td>579,87</td>
+<td>585,11</td>
+<td>1165,59</td>
+</tr>
+<tr>
+<td>239</td>
+<td>1165,59</td>
+<td>3,50</td>
+<td>581,61</td>
+<td>585,11</td>
+<td>583,98</td>
+</tr>
+<tr>
+<td>240</td>
+<td>583,98</td>
+<td>1,75</td>
+<td>583,98</td>
+<td>585,73</td>
+<td>0,00</td>
+</tr>
+</table>
+
+<p>
+Controllo rapido: il piano dura 240 rate, cioè 20 anni. L'ultima rata può risultare
+leggermente diversa da 585,11 euro a causa degli arrotondamenti centesimali.
+</p>
+
+<p><a href="#inizio">Torna all'indice</a></p>
+</div>
+
+<hr>
+
+<div id="autovalutazione">
+<h2>5. Griglia di autovalutazione</h2>
+
+<p>
+Compila la griglia osservando la tua prima versione.
+Scegli una risposta per ogni riga. La nota breve è facoltativa.
+</p>
+
+<table border="1">
+<thead>
+<tr>
+<th>Aspetto da controllare</th>
+<th>Sì</th>
+<th>In parte</th>
+<th>No</th>
+<th>Nota breve facoltativa</th>
+</tr>
+</thead>
+<tbody>
+<tr data-aspetto="La mia prima versione segue la consegna orale: non parte subito dalla formula della rata.">
+<td>La mia prima versione segue la consegna orale: non parte subito dalla formula della rata.</td>
+<td><input type="radio" name="a1" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a1" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a1" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n1" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Usa un procedimento rata per rata.">
+<td>Usa un procedimento rata per rata.</td>
+<td><input type="radio" name="a2" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a2" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a2" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n2" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Calcola gli interessi sul debito residuo.">
+<td>Calcola gli interessi sul debito residuo.</td>
+<td><input type="radio" name="a3" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a3" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a3" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n3" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Calcola la quota capitale come rata pagata meno interessi.">
+<td>Calcola la quota capitale come rata pagata meno interessi.</td>
+<td><input type="radio" name="a4" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a4" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a4" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n4" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Aggiorna il debito residuo dopo ogni rata.">
+<td>Aggiorna il debito residuo dopo ogni rata.</td>
+<td><input type="radio" name="a5" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a5" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a5" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n5" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Si ferma quando il debito arriva a zero.">
+<td>Si ferma quando il debito arriva a zero.</td>
+<td><input type="radio" name="a6" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a6" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a6" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n6" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Usa nomi comprensibili per le quantità.">
+<td>Usa nomi comprensibili per le quantità.</td>
+<td><input type="radio" name="a7" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a7" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a7" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n7" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Mostra un risultato leggibile.">
+<td>Mostra un risultato leggibile.</td>
+<td><input type="radio" name="a8" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a8" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a8" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n8" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Riesco a spiegare dove, nel mio lavoro, viene calcolata la quota interessi.">
+<td>Riesco a spiegare dove, nel mio lavoro, viene calcolata la quota interessi.</td>
+<td><input type="radio" name="a9" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a9" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a9" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n9" oninput="aggiornaSintesi()"></td>
+</tr>
+<tr data-aspetto="Riesco a spiegare dove, nel mio lavoro, viene aggiornato il debito residuo.">
+<td>Riesco a spiegare dove, nel mio lavoro, viene aggiornato il debito residuo.</td>
+<td><input type="radio" name="a10" value="Sì" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a10" value="In parte" onchange="aggiornaSintesi()"></td>
+<td><input type="radio" name="a10" value="No" onchange="aggiornaSintesi()"></td>
+<td><input type="text" id="n10" oninput="aggiornaSintesi()"></td>
+</tr>
+</tbody>
+</table>
+
+<p>
+<button type="button" onclick="aggiornaSintesi()">Aggiorna sintesi</button>
+<button type="button" onclick="salvaLocale()">Salva in questo browser</button>
+<button type="button" onclick="caricaLocale()">Ricarica risposte salvate</button>
+<button type="button" onclick="pulisciModulo()">Pulisci modulo</button>
+</p>
+
+<p><a href="#inizio">Torna all'indice</a></p>
+</div>
+
+<hr>
+
+<div id="commento">
+<h2>6. Commento libero</h2>
+
+<p>
+Scrivi qui un commento libero sulla tua prima versione: cosa funziona, cosa non funziona, cosa vuoi correggere o che cosa non ti è chiaro.
+</p>
+
+<textarea id="commento-libero" rows="10" cols="100" oninput="aggiornaSintesi()"></textarea>
+
+<p><a href="#inizio">Torna all'indice</a></p>
+</div>
+
+<hr>
+
+<div id="sintesi-finale">
+<h2>7. Sintesi da copiare in Classroom</h2>
+
+<p>
+Dopo aver compilato la griglia, premi “Aggiorna sintesi” e poi “Copia sintesi”.
+Incolla il testo nella consegna di Classroom, oppure consegna questo file compilato se richiesto.
+</p>
+
+<p>
+<button type="button" onclick="aggiornaSintesi()">Aggiorna sintesi</button>
+<button type="button" onclick="copiaSintesi()">Copia sintesi</button>
+</p>
+
+<textarea id="sintesi" rows="24" cols="100"></textarea>
+
+<p><a href="#inizio">Torna all'indice</a></p>
+</div>
+
+</body>
+</html>
